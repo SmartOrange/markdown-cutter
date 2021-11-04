@@ -1,5 +1,5 @@
 {
-  "name": "markdown-splitter",
+  "name": "markdown-cutter",
   "version": "0.0.1",
   "description": "Markdown text cutter, will not cut off links, pictures",
   "main": "src/index.js",
