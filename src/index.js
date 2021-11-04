@@ -43,7 +43,7 @@ class Splitter {
         const currentLimits = { ...this.limits, ...limits };
         matches.forEach(({ reg, key, overReturn }) => {
             const limit = currentLimits[key] || 1;
-            string = string.replace(reg, function(content, ...arvgs){
+            string = string.replace(reg, function (content, ...arvgs) {
                 if (resources.filter(re => re.key = key).length < limit) {
                     resources.push({
                         key,
@@ -62,7 +62,7 @@ class Splitter {
         };
     }
 
-    findInMatches(key){
+    findInMatches(key) {
         return this.matches.find(match => match.key === key);
     }
 
@@ -88,25 +88,20 @@ class Splitter {
             if (index % 2) {
                 const item = sortResources.shift();
                 const match = this.findInMatches(item.key);
-                return match.getValue ?  match.getValue(item.content) : item.content;
+                return match.getValue ? match.getValue(item.content) : item.content;
             } else {
                 return this.textParse(textNode);
             }
         }).join('');
     }
 
-    _cut(str = '', options) {
-        if (!str) return '';
-        const result = this.analyze(str, options);
-        return this.assemble(result, options);
-
-    }
     prepare(txt) {
         if (this.prepareFn) {
             return this.prepareFn(txt);
         }
         return txt;
     }
+
     textParse(txt) {
         if (this.textParseFn) {
             return this.textParseFn(txt);
@@ -115,7 +110,17 @@ class Splitter {
     }
 
     cut(txt, options) {
-        return this._cut(this.prepare(txt), options);
+        return this.dissect(txt, options).content;
+    }
+
+    dissect(txt, options) {
+        txt = this.prepare(txt);
+        if (!txt) return { content: '' };
+        const report = this.analyze(txt, options);
+        return {
+            report,
+            content: this.assemble(report, options)
+        }
     }
 }
 

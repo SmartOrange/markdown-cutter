@@ -1,6 +1,6 @@
 {
   "name": "markdown-cutter",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Markdown text cutter, will not cut off links, pictures",
   "main": "src/index.js",
   "directories": {
