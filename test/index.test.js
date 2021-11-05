@@ -1,7 +1,7 @@
 const assert = require('assert');
 const he = require('he');
-
-const splitter = require('../src')({
+const MarkdownCutter = require('../src');
+const cutter = new MarkdownCutter({
     matches: [
         {
             key: 'emoticon',
@@ -14,7 +14,7 @@ const splitter = require('../src')({
             key: 'at',
             reg: /\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g,
             getValue(str) {
-                return str.replace(/\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g, (a, b) => `@${ b }`);
+                return str.replace(/\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g, (a, b) => `@${b}`);
             }
         }
     ],
@@ -39,25 +39,25 @@ const splitter = require('../src')({
 const str = `![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁![image.png](测试图片1)dsadsadsa![image.png](测试图片2)你![image.png](测试图片3)好`;
 
 describe('test/index.test.js', () => {
-    describe('splitter', () => {
-        it('should work', async function () {
-            assert(splitter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
-            assert(splitter.cut(str, { text: 1 }) === '![image.png](测试图片0)超...');
+    describe('cutter', () => {
+        it('should work', async function() {
+            assert(cutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
+            assert(cutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超...');
         });
 
-        it('should work with emoticons', async function () {
+        it('should work with emoticons', async function() {
             const emoticons = '![]([object Object]#height=18&width=18)';
-            const str = `${ emoticons }${ emoticons }哈哈`;
-            assert(splitter.cut(str, { emoticon: 100 }) === '[表情][表情]哈哈');
+            const str = `${emoticons}${emoticons}哈哈`;
+            assert(cutter.cut(str, { emoticon: 100 }) === '[表情][表情]哈哈');
         });
 
-        it('should work with @', async function () {
+        it('should work with @', async function() {
             const str = 'sdas [@墨水(moshui.ink)](/moshui.ink) 这是啥啊啊';
-            assert(splitter.cut(str) === 'sdas @墨水 这是啥啊啊');
+            assert(cutter.cut(str) === 'sdas @墨水 这是啥啊啊');
         });
 
-        it('should work with empty', async function () {
-            const res = splitter.cut('');
+        it('should work with empty', async function() {
+            const res = cutter.cut('');
             assert(res === '');
         });
     });

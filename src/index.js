@@ -23,8 +23,9 @@ function slice(string, ranges) {
     return result;
 }
 
-class Splitter {
-    constructor({ prepareFn, textParseFn, suffix = '', matches = {}, limits = { text: 140, image: 1 } }) {
+class Cutter {
+    constructor(options) {
+        const { prepareFn, textParseFn, suffix = '', matches = {}, limits = { text: 140, image: 1 } } = options;
         this.matches = [...matches, ...defaultMatches];
         this.suffix = suffix;
         this.prepareFn = prepareFn;
@@ -43,7 +44,7 @@ class Splitter {
         const currentLimits = { ...this.limits, ...limits };
         matches.forEach(({ reg, key, overReturn }) => {
             const limit = currentLimits[key] || 1;
-            string = string.replace(reg, function (content, ...arvgs) {
+            string = string.replace(reg, function(content, ...arvgs) {
                 if (resources.filter(re => re.key = key).length < limit) {
                     resources.push({
                         key,
@@ -124,4 +125,4 @@ class Splitter {
     }
 }
 
-module.exports = (options) => new Splitter(options);
+module.exports = Cutter;

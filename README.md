@@ -8,7 +8,8 @@ Markdown text cutter, will not cut off links, pictures
 ## Usage
 
 ```javascript
-const markdownCutter = require('markdown-cutter')({
+const MarkdownCutter = require('markdown-cutter');
+const cutter = new MarkdownCutter({
     // Custom matches
     matches: [
         {
@@ -32,15 +33,15 @@ const markdownCutter = require('markdown-cutter')({
 });
 const content = 'balabala ![image](xxx) ![]([object Object]#height=18&width=18) balabala';
 // quick cut
-console.log(markdownCutter.cut(content));
+console.log(cutter.cut(content));
 // 'balabala ![image](xxx) [emoticon] balabala'
 
 // analyze only 
-console.log(markdownCutter.analyze(content));
+console.log(cutter.analyze(content));
 // { resources: [{key:'image', content: '![image](xxx)', index: 9}], string: 'balabala _______ _______ balabala'}
 
 // analyze and cut
-console.log(markdownCutter.dissect(content));
+console.log(cutter.dissect(content));
 // {report: "as analyze result", content: "as cut result"}
 ```
 
