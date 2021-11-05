@@ -82,6 +82,8 @@ class Cutter {
     }
 
     assemble({ string, resources }, limits) {
+        if (!resources.length) return this.textParse(string);
+
         const currentLimits = { ...this.limits, ...limits };
         let str = string;
         // 初始位置为0,保证第一个肯定是 text
