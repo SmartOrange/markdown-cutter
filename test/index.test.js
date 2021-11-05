@@ -61,5 +61,32 @@ describe('test/index.test.js', () => {
             assert(res === '');
         });
     });
+    describe('functions', () => {
+        it('findInMatches', () => {
+            assert.deepEqual(cutter.findInMatches('image'), { key: 'image', reg: /!\[.*?\]\(.*?\)/g });
+            assert(cutter.findInMatches('emoticon').key === 'emoticon');
+        });
+
+        it('slice', () => {
+            assert.deepEqual(cutter.slice('12345678', [1, 2, 3, 4, 5, 6]), ['1', '2', '3', '4', '5', '6']);
+            assert.deepEqual(cutter.slice('12345678', [1, 3, 2, 4]), ['1', '2', '3', '4']);
+        });
+    });
+
+    describe('doMatch', () => {
+        it('should work with image match', function() {
+            const res = cutter.doMatch('tes![image](url)t[link](xx)', cutter.findInMatches('image'), 2);
+            assert(res.string === 'tes_____________t[link](xx)');
+            assert(res.resources.length === 1);
+            assert.deepEqual(res.resources[0], { key: 'image', index: 3, content: '![image](url)', length: 13 });
+        });
+
+        it('should work with link match', function() {
+            const res = cutter.doMatch('test[link](xx)', cutter.findInMatches('link'), 2);
+            assert(res.string === 'test__________');
+            assert(res.resources.length === 1);
+            assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10 });
+        });
+    });
 });
 

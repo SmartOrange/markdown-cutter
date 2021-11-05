@@ -3,25 +3,13 @@ const defaultMatches = [
     {
         key: 'image',
         reg: /!\[.*?\]\(.*?\)/g,
+    },
+    {
+        key: 'link',
+        reg: /\[.*?\]\(.*?\)/g,
     }
 ];
-/**
- * 
- * @param {*} string 
- * @param {*} ranges [1,2, 3,4, 5,6]
- */
-function slice(string, ranges) {
-    const result = [];
-    ranges = ranges.sort((a, b) => a - b);
-    if (ranges[0] !== 0) {
-        ranges.unshift(0);
-    }
-    ranges.reduce((previousValue, currentValue) => {
-        result.push(string.slice(previousValue, currentValue));
-        return currentValue;
-    });
-    return result;
-}
+
 
 class Cutter {
     constructor(options) {
@@ -33,29 +21,55 @@ class Cutter {
         this.limits = limits;
     }
     /**
+     * 
+     * @param {*} string 
+     * @param {*} ranges [1,2, 3,4, 5,6]
+     */
+    slice(string, ranges) {
+        const result = [];
+        if (!ranges || !ranges.length) return string;
+        ranges = ranges.sort((a, b) => a - b);
+        if (ranges[0] !== 0) {
+            ranges.unshift(0);
+        }
+        ranges.reduce((previousValue, currentValue) => {
+            result.push(string.slice(previousValue, currentValue));
+            return currentValue;
+        });
+        return result;
+    }
+
+    doMatch(string, match, limit = 1) {
+        const { reg, key, overReturn } = match;
+        const resources = [];
+        string = string.replace(reg, function(content, ...arvgs) {
+            if (resources.filter(re => re.key = key).length < limit) {
+                resources.push({
+                    key,
+                    index: arvgs[arvgs.length - 2],
+                    content,
+                    length: content.length,
+                });
+                return '_'.repeat(content.length);
+            }
+            return overReturn ? overReturn(content) : '';
+        });
+        return { string, resources };
+    }
+
+    /**
      * 解析所有匹配到资源
      * @param {string} str 
      * @returns 
      */
     analyze(str, limits) {
         let string = str;
-        const { matches } = this;
-        const resources = [];
+        let resources = [];
         const currentLimits = { ...this.limits, ...limits };
-        matches.forEach(({ reg, key, overReturn }) => {
-            const limit = currentLimits[key] || 1;
-            string = string.replace(reg, function(content, ...arvgs) {
-                if (resources.filter(re => re.key = key).length < limit) {
-                    resources.push({
-                        key,
-                        index: arvgs[arvgs.length - 2],
-                        content,
-                        length: content.length,
-                    });
-                    return '_'.repeat(content.length);
-                }
-                return overReturn ? overReturn(content) : '';
-            });
+        this.matches.forEach(match => {
+            const result = this.doMatch(string, match, currentLimits[match.key]);
+            string = result.string;
+            resources = [...resources, ...result.resources];
         });
         return {
             resources,
@@ -83,7 +97,7 @@ class Cutter {
         if (str.length > currentLimits.text + ignoreLen) {
             str = str.slice(0, currentLimits.text + ignoreLen) + this.suffix;
         }
-        const textNodes = slice(str, ranges);
+        const textNodes = this.slice(str, ranges);
         // 加回资源
         return textNodes.map((textNode, index) => {
             if (index % 2) {
