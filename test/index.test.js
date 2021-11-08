@@ -17,7 +17,7 @@ const cutter = new MarkdownCutter({
             getValue(str, length) {
                 return str.replace(/\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g, (a, b) => `@${b}`);
             }
-        }
+        },
     ],
     limits: {
         text: 140,
@@ -71,9 +71,9 @@ describe('test/index.test.js', () => {
             assert(cutter.findInMatches('emoticon').key === 'emoticon');
         });
 
-        it('slice', () => {
-            assert.deepEqual(cutter.slice('12345678', [1, 2, 3, 4, 5, 6]), ['1', '2', '3', '4', '5', '6']);
-            assert.deepEqual(cutter.slice('12345678', [1, 3, 2, 4]), ['1', '2', '3', '4']);
+        it('splitByPoints', () => {
+            assert.deepEqual(cutter.splitByPoints('12345678', [1, 2, 3, 4, 5, 6]), ['1', '2', '3', '4', '5', '6']);
+            assert.deepEqual(cutter.splitByPoints('12345678', [1, 3, 2, 4]), ['1', '2', '3', '4']);
         });
     });
 
@@ -90,6 +90,25 @@ describe('test/index.test.js', () => {
             assert(res.string === 'test__________');
             assert(res.resources.length === 1);
             assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10 });
+        });
+
+        it('should work with foo match', function() {
+            const res = cutter.doMatch('foo[link](xx)', { key: 'foo', reg: /foo/ }, 2);
+            assert(res.string === '___[link](xx)');
+            assert(res.resources.length === 1);
+            assert.deepEqual(res.resources[0], { key: 'foo', index: 0, content: 'foo', length: 3 });
+        });
+
+        it('should work with string match', function() {
+            const res = cutter.doMatch('string[link](xx)', { key: 'string', reg: 'string' }, 2);
+            assert(res.string === '______[link](xx)');
+            assert(res.resources.length === 1);
+            assert.deepEqual(res.resources[0], { key: 'string', index: 0, content: 'string', length: 6 });
+        });
+
+        it('should return if match without reg', function() {
+            const res = cutter.doMatch('foo[link](xx)', { key: 'empty' });
+            assert(!res);
         });
     });
 });

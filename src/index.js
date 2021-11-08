@@ -10,29 +10,32 @@ const defaultMatches = [
     }
 ];
 
-
+const DEFAULT_LIMITS = {
+    text: 140,
+    image: 1,
+    link: 1,
+};
 class Cutter {
     constructor(options) {
-        const { prepareFn, textParseFn, suffix = '', matches = {}, limits = { text: 140, image: 1 } } = options;
+        const { prepareFn, textParseFn, suffix = '', matches = {}, limits = DEFAULT_LIMITS } = options;
         this.matches = [...matches, ...defaultMatches];
         this.suffix = suffix;
         this.prepareFn = prepareFn;
         this.textParseFn = textParseFn;
         this.limits = limits;
     }
+
     /**
-     * 
+     * Split string based on cut points
      * @param {*} string 
-     * @param {*} ranges [1,2, 3,4, 5,6]
+     * @param {*} points [1,2, 3,4, 5,6]
      */
-    slice(string, ranges) {
+    splitByPoints(string, points) {
         const result = [];
-        if (!ranges || !ranges.length) return string;
-        ranges = ranges.sort((a, b) => a - b);
-        if (ranges[0] !== 0) {
-            ranges.unshift(0);
-        }
-        ranges.reduce((previousValue, currentValue) => {
+        if (!points || !points.length) return string;
+        points = points.sort((a, b) => a - b);
+        if (points[0] !== 0) points.unshift(0);
+        points.reduce((previousValue, currentValue) => {
             result.push(string.slice(previousValue, currentValue));
             return currentValue;
         });
@@ -41,6 +44,8 @@ class Cutter {
 
     doMatch(string, match, limit = 1) {
         const { reg, key, overReturn } = match;
+        if (!reg) return console.warn('match:%s has no reg', key);
+
         const resources = [];
         string = string.replace(reg, function(content, ...arvgs) {
             if (resources.filter(re => re.key = key).length < limit) {
@@ -58,22 +63,25 @@ class Cutter {
     }
 
     /**
-     * 解析所有匹配到资源
-     * @param {string} str 
+     * Parse all matching resources
+     * @param {string} string 
+     * @param {object} limits 
      * @returns 
      */
-    analyze(str, limits) {
-        let string = str;
+    analyze(string, limits = {}) {
+        let str = string;
         let resources = [];
         const currentLimits = { ...this.limits, ...limits };
         this.matches.forEach(match => {
-            const result = this.doMatch(string, match, currentLimits[match.key]);
-            string = result.string;
-            resources = [...resources, ...result.resources];
+            const result = this.doMatch(str, match, currentLimits[match.key]);
+            if (result) {
+                str = result.string;
+                resources = [...resources, ...result.resources];
+            }
         });
         return {
             resources,
-            string,
+            string: str,
         };
     }
 
@@ -81,33 +89,32 @@ class Cutter {
         return this.matches.find(match => match.key === key);
     }
 
-    assemble({ string, resources }, limits) {
+    assemble({ string, resources } = {}, limits = {}) {
         if (!resources.length) return this.textParse(string);
 
         const currentLimits = { ...this.limits, ...limits };
-        let isWithSuffix = false;
+        let isSuffixRequired = false;
         let str = string;
         const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
         if (str.length > currentLimits.text + ignoreLen) {
             str = str.slice(0, currentLimits.text + ignoreLen);
-            isWithSuffix = true;
+            isSuffixRequired = true;
         }
         const endIndex = str.length;
-        // 初始位置为0,保证第一个肯定是 text
-        const ranges = [0];
-        // _tmps 排序
+        // The initial position is 0, to ensure that the first one is definitely text
+        const points = [0];
         const sortResources = resources.sort((a, b) => a.index - b.index);
         sortResources.forEach(({ index, length }) => {
             if (index < endIndex) {
-                ranges.push(index);
+                points.push(index);
             }
             if (index + length < endIndex) {
-                ranges.push(index + length);
+                points.push(index + length);
             }
         });
-        ranges.push(endIndex);
-        const textNodes = this.slice(str, ranges);
-        // 加回资源
+        points.push(endIndex);
+        const textNodes = this.splitByPoints(str, points);
+        // Add resources back
         str = textNodes.map((textNode, index) => {
             if (index % 2) {
                 const item = sortResources.shift();
@@ -117,7 +124,7 @@ class Cutter {
                 return this.textParse(textNode);
             }
         }).join('');
-        if (isWithSuffix) {
+        if (isSuffixRequired) {
             str = str + this.suffix;
         }
         return str;
@@ -137,11 +144,11 @@ class Cutter {
         return txt;
     }
 
-    cut(txt, options) {
+    cut(txt, options = {}) {
         return this.dissect(txt, options).content;
     }
 
-    dissect(txt, options) {
+    dissect(txt, options = {}) {
         txt = this.prepare(txt);
         if (!txt) return { content: '' };
         const report = this.analyze(txt, options);
