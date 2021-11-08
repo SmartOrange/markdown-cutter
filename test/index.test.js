@@ -1,25 +1,27 @@
 const assert = require('assert');
 const he = require('he');
 const MarkdownCutter = require('../src');
+const markdown = require('./markdown');
 const cutter = new MarkdownCutter({
     matches: [
         {
             key: 'emoticon',
             reg: /\!\[\]\(\[object Object\]#height=18&width=18\)/g,
-            getValue(str) {
+            getValue(str, length) {
                 return '[表情]'
             }
         },
         {
             key: 'at',
             reg: /\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g,
-            getValue(str) {
+            getValue(str, length) {
                 return str.replace(/\[@([^(]{1,100})\(([\w.-_]{1,100})\)\]\(\/[\w.-_]{1,100}\)/g, (a, b) => `@${b}`);
             }
         }
     ],
     limits: {
         text: 140,
+        link: 20,
     },
     prepare: (str) => {
         // 屏蔽表情, 换行去重，去除特殊的空行
@@ -39,6 +41,7 @@ const cutter = new MarkdownCutter({
 const str = `![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁![image.png](测试图片1)dsadsadsa![image.png](测试图片2)你![image.png](测试图片3)好`;
 
 describe('test/index.test.js', () => {
+
     describe('cutter', () => {
         it('should work', async function() {
             assert(cutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
@@ -61,6 +64,7 @@ describe('test/index.test.js', () => {
             assert(res === '');
         });
     });
+
     describe('functions', () => {
         it('findInMatches', () => {
             assert.deepEqual(cutter.findInMatches('image'), { key: 'image', reg: /!\[.*?\]\(.*?\)/g });

@@ -85,31 +85,42 @@ class Cutter {
         if (!resources.length) return this.textParse(string);
 
         const currentLimits = { ...this.limits, ...limits };
+        let isWithSuffix = false;
         let str = string;
+        const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
+        if (str.length > currentLimits.text + ignoreLen) {
+            str = str.slice(0, currentLimits.text + ignoreLen);
+            isWithSuffix = true;
+        }
+        const endIndex = str.length;
         // 初始位置为0,保证第一个肯定是 text
         const ranges = [0];
         // _tmps 排序
         const sortResources = resources.sort((a, b) => a.index - b.index);
-        const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
         sortResources.forEach(({ index, length }) => {
-            ranges.push(index);
-            ranges.push(index + length);
+            if (index < endIndex) {
+                ranges.push(index);
+            }
+            if (index + length < endIndex) {
+                ranges.push(index + length);
+            }
         });
-        ranges.push(str.length);
-        if (str.length > currentLimits.text + ignoreLen) {
-            str = str.slice(0, currentLimits.text + ignoreLen) + this.suffix;
-        }
+        ranges.push(endIndex);
         const textNodes = this.slice(str, ranges);
         // 加回资源
-        return textNodes.map((textNode, index) => {
+        str = textNodes.map((textNode, index) => {
             if (index % 2) {
                 const item = sortResources.shift();
                 const match = this.findInMatches(item.key);
-                return match.getValue ? match.getValue(item.content) : item.content;
+                return match.getValue ? match.getValue(item.content, textNode.length) : item.content;
             } else {
                 return this.textParse(textNode);
             }
         }).join('');
+        if (isWithSuffix) {
+            str = str + this.suffix;
+        }
+        return str;
     }
 
     prepare(txt) {
