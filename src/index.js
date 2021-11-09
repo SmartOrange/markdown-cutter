@@ -19,14 +19,14 @@ const DEFAULT_LIMITS = {
 
 class Cutter {
     constructor(options = {}) {
-        const { prepareFn, textParseFn, suffix = '', matches = [], limits = DEFAULT_LIMITS } = options;
+        const { onPrepare, onTextParse, suffix = '', matches = [], limits = DEFAULT_LIMITS } = options;
         this.matches = [...matches, ...defaultMatches];
         this.suffix = suffix;
-        if (prepareFn) {
-            this.prepareFn = prepareFn;
+        if (onPrepare) {
+            this.onPrepare = onPrepare;
         }
-        if (textParseFn) {
-            this.textParseFn = textParseFn;
+        if (onTextParse) {
+            this.onTextParse = onTextParse;
         }
         this.limits = limits;
     }
@@ -137,15 +137,15 @@ class Cutter {
     }
 
     prepare(txt) {
-        if (this.prepareFn) {
-            return this.prepareFn(txt);
+        if (this.onPrepare) {
+            return this.onPrepare(txt);
         }
         return txt;
     }
 
     textParse(txt) {
-        if (this.textParseFn) {
-            return this.textParseFn(txt);
+        if (this.onTextParse) {
+            return this.onTextParse(txt);
         }
         return txt;
     }
