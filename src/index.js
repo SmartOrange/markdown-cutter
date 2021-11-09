@@ -18,12 +18,16 @@ const DEFAULT_LIMITS = {
 };
 
 class Cutter {
-    constructor(options) {
-        const { prepareFn, textParseFn, suffix = '', matches = {}, limits = DEFAULT_LIMITS } = options;
+    constructor(options = {}) {
+        const { prepareFn, textParseFn, suffix = '', matches = [], limits = DEFAULT_LIMITS } = options;
         this.matches = [...matches, ...defaultMatches];
         this.suffix = suffix;
-        this.prepareFn = prepareFn;
-        this.textParseFn = textParseFn;
+        if (prepareFn) {
+            this.prepareFn = prepareFn;
+        }
+        if (textParseFn) {
+            this.textParseFn = textParseFn;
+        }
         this.limits = limits;
     }
 
@@ -34,7 +38,7 @@ class Cutter {
      */
     splitByPoints(string, points) {
         const result = [];
-        if (!points || !points.length) return string;
+        if (!points || !points.length) return [string];
         points = points.sort((a, b) => a - b);
         if (points[0] !== 0) points.unshift(0);
         points.reduce((previousValue, currentValue) => {
@@ -151,6 +155,7 @@ class Cutter {
     }
 
     dissect(txt, options = {}) {
+        if (!txt) return { content: '' };
         txt = this.prepare(txt);
         if (!txt) return { content: '' };
         const report = this.analyze(txt, options);

@@ -3,6 +3,7 @@
 const assert = require('assert');
 const he = require('he');
 const MarkdownCutter = require('../src');
+const defaultCutter = new MarkdownCutter();
 const cutter = new MarkdownCutter({
     matches: [
         {
@@ -24,7 +25,7 @@ const cutter = new MarkdownCutter({
         text: 140,
         link: 20,
     },
-    prepare: (str) => {
+    prepareFn: (str) => {
         // 屏蔽表情, 换行去重，去除特殊的空行
         str = str.replace(/\<br\s\/\>/g, '\n')
             .replace(/<a\sname="\S+"><\/a>/g, '\n')
@@ -34,14 +35,21 @@ const cutter = new MarkdownCutter({
         str = str.trim();
         return str;
     },
-    textParse(str) {
+    textParseFn(str) {
         return str.replace(/[!*\[\]<>`]/g, he.encode);
     },
     suffix: '...',
 });
+
 const str = `![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁![image.png](测试图片1)dsadsadsa![image.png](测试图片2)你![image.png](测试图片3)好`;
 
 describe('test/index.test.js', () => {
+    describe('defaultCutter', function() {
+        it('should work', async function() {
+            assert(defaultCutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
+            assert(defaultCutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超...');
+        });
+    });
 
     describe('cutter', () => {
         it('should work', async function() {
@@ -64,15 +72,27 @@ describe('test/index.test.js', () => {
         });
     });
 
-    describe('functions', () => {
-        it('findInMatches', () => {
-            assert.deepEqual(cutter.findInMatches('image'), { key: 'image', reg: /!\[.*?\]\(.*?\)/g });
-            assert(cutter.findInMatches('emoticon').key === 'emoticon');
+    describe('findInMatches', () => {
+        assert.deepEqual(cutter.findInMatches('image'), { key: 'image', reg: /!\[.*?\]\(.*?\)/g });
+        assert(cutter.findInMatches('emoticon').key === 'emoticon');
+    });
+
+    describe('splitByPoints', () => {
+        it('should work', () => {
+            assert.deepEqual(cutter.splitByPoints('12345678', [0, 1, 2, 3, 4, 5, 6]), ['1', '2', '3', '4', '5', '6']);
         });
 
-        it('splitByPoints', () => {
+        it('should unshift 0, if points[0] !== 0', () => {
             assert.deepEqual(cutter.splitByPoints('12345678', [1, 2, 3, 4, 5, 6]), ['1', '2', '3', '4', '5', '6']);
+        });
+
+        it('should sort work', () => {
             assert.deepEqual(cutter.splitByPoints('12345678', [1, 3, 2, 4]), ['1', '2', '3', '4']);
+        });
+
+        it('should return string if points is empty', () => {
+            assert.deepEqual(cutter.splitByPoints('12345678', []), ['12345678']);
+            assert.deepEqual(cutter.splitByPoints('12345678'), ['12345678']);
         });
     });
 
@@ -108,6 +128,29 @@ describe('test/index.test.js', () => {
         it('should return if match without reg', function() {
             const res = cutter.doMatch('foo[link](xx)', { key: 'empty' });
             assert(!res);
+        });
+
+        it('should work with overReturn', function() {
+            const res = cutter.doMatch('foofoo[link](xx)', { key: 'foo', reg: 'foo', overReturn() { return '1'; } }, 1);
+            assert(res, 'foo1[link](xx)');
+        });
+    });
+
+    describe('dissect', function() {
+        it('should work', function() {
+            const res = cutter.dissect(str);
+            assert(res.report);
+            assert(res.content);
+        });
+
+        it('should return {content: \'\'} if empty', function() {
+            const res = cutter.dissect();
+            assert.deepStrictEqual(res, { content: '' });
+        });
+
+        it('should return {content: \'\'} if prepare return empty', function() {
+            const res = new MarkdownCutter({ prepareFn() { } }).dissect(str);
+            assert.deepStrictEqual(res, { content: '' });
         });
     });
 });
