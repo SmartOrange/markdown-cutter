@@ -1,3 +1,4 @@
+'use strict';
 
 const defaultMatches = [
     {
@@ -15,6 +16,7 @@ const DEFAULT_LIMITS = {
     image: 1,
     link: 1,
 };
+
 class Cutter {
     constructor(options) {
         const { prepareFn, textParseFn, suffix = '', matches = {}, limits = DEFAULT_LIMITS } = options;
@@ -155,7 +157,7 @@ class Cutter {
         return {
             report,
             content: this.assemble(report, options)
-        }
+        };
     }
 }
 

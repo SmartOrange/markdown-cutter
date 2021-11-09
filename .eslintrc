@@ -1,0 +1,28 @@
+{
+    "parser": "@babel/eslint-parser",
+    "parserOptions": {
+      "sourceType": "script",
+      "ecmaVersion": 2020,
+      "requireConfigFile": false
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "rules": {
+      "curly": [2, "multi-line"],
+      "consistent-return": 0,
+      "quotes": [2, "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
+      "semi": [2, "always"],
+      "strict": ["error", "safe"],
+      "no-const-assign": "error",
+      "no-undef": 2,
+      "no-underscore-dangle": 0,
+      "no-use-before-define": [2, "nofunc"],
+      "no-unused-vars": [2, { "vars": "all", "args": "none", "ignoreRestSiblings": true }],
+      "no-shadow": 2,
+      "keyword-spacing": "error",
+      "eol-last": "error"
+    }
+  }
+  

@@ -7,26 +7,32 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "test:coverage": "nyc npm run test && nyc report --reporter=lcov",
+    "lint": "eslint ./",
+    "lint:fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SmartOrange/markdown-splitter.git"
+    "url": "git+https://github.com/SmartOrange/markdown-cutter.git"
   },
   "keywords": [
     "markdown",
-    "cutter",
-    "splitter"
+    "cutter"
   ],
   "author": "SmartOrange",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SmartOrange/markdown-splitter/issues"
+    "url": "https://github.com/SmartOrange/markdown-cutter/issues"
   },
-  "homepage": "https://github.com/SmartOrange/markdown-splitter#readme",
+  "homepage": "https://github.com/SmartOrange/markdown-cutter#readme",
   "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/eslint-parser": "^7.16.0",
+    "eslint": "^8.2.0",
     "he": "^1.2.0",
-    "mocha": "^9.1.3"
+    "mocha": "^9.1.3",
+    "nyc": "^15.1.0"
   },
   "dependencies": {}
 }

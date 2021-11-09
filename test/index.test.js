@@ -1,14 +1,15 @@
+'use strict';
+
 const assert = require('assert');
 const he = require('he');
 const MarkdownCutter = require('../src');
-const markdown = require('./markdown');
 const cutter = new MarkdownCutter({
     matches: [
         {
             key: 'emoticon',
             reg: /\!\[\]\(\[object Object\]#height=18&width=18\)/g,
             getValue(str, length) {
-                return '[表情]'
+                return '[表情]';
             }
         },
         {
@@ -50,13 +51,11 @@ describe('test/index.test.js', () => {
 
         it('should work with emoticons', async function() {
             const emoticons = '![]([object Object]#height=18&width=18)';
-            const str = `${emoticons}${emoticons}哈哈`;
-            assert(cutter.cut(str, { emoticon: 100 }) === '[表情][表情]哈哈');
+            assert(cutter.cut(`${emoticons}${emoticons}哈哈`, { emoticon: 100 }) === '[表情][表情]哈哈');
         });
 
         it('should work with @', async function() {
-            const str = 'sdas [@墨水(moshui.ink)](/moshui.ink) 这是啥啊啊';
-            assert(cutter.cut(str) === 'sdas @墨水 这是啥啊啊');
+            assert(cutter.cut('sdas [@墨水(moshui.ink)](/moshui.ink) 这是啥啊啊') === 'sdas @墨水 这是啥啊啊');
         });
 
         it('should work with empty', async function() {
