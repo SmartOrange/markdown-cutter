@@ -47,7 +47,7 @@ describe('test/index.test.js', () => {
     describe('defaultCutter', function() {
         it('should work', async function() {
             assert(defaultCutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
-            assert(defaultCutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超...');
+            assert(defaultCutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超');
         });
     });
 
