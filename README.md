@@ -1,5 +1,6 @@
 # markdown-cutter
 
+[![Package Quality](https://packagequality.com/shield/markdown-cutter.svg)](https://packagequality.com/#?package=markdown-cutter)
 [![NPM Downloads](https://img.shields.io/npm/dm/markdown-cutter.svg?style=flat)](https://www.npmjs.com/package/markdown-cutter)
 [![NPM Version](https://img.shields.io/npm/v/markdown-cutter.svg?style=flat)](https://www.npmjs.com/package/markdown-cutter)
 
