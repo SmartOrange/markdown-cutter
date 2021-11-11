@@ -8,6 +8,10 @@ const defaultMatches = [
     {
         key: 'link',
         reg: /\[.*?\]\(.*?\)/g,
+        exportTxt(content) {
+            let mathces = content.match(/\[(.*?)\]\(.*?\)/);
+            return mathces ? mathces[1] : '';
+        }
     }
 ];
 
@@ -49,18 +53,22 @@ class Cutter {
     }
 
     doMatch(string, match, limit = 1) {
-        const { reg, key, overReturn } = match;
+        const { reg, key, overReturn, exportTxt } = match;
         if (!reg) return console.warn('match:%s has no reg', key);
 
         const resources = [];
         string = string.replace(reg, function(content, ...arvgs) {
             if (resources.filter(re => re.key = key).length < limit) {
-                resources.push({
+                const resource = {
                     key,
                     index: arvgs[arvgs.length - 2],
                     content,
                     length: content.length,
-                });
+                };
+                if (exportTxt) {
+                    resource.txt = exportTxt(content);
+                }
+                resources.push(resource);
                 return '_'.repeat(content.length);
             }
             return overReturn ? overReturn(content) : '';
@@ -95,13 +103,13 @@ class Cutter {
         return this.matches.find(match => match.key === key);
     }
 
-    assemble({ string, resources } = {}, limits = {}) {
+    assemble({ string, resources = [] } = {}, limits = {}) {
         if (!resources.length) return this.textParse(string);
 
         const currentLimits = { ...this.limits, ...limits };
         let isSuffixRequired = false;
         let str = string;
-        const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
+        const ignoreLen = resources.map(re => re.txt ? re.length - re.txt.length : re.length).reduce((a, b) => a + b);
         if (str.length > currentLimits.text + ignoreLen) {
             str = str.slice(0, currentLimits.text + ignoreLen);
             isSuffixRequired = true;

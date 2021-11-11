@@ -105,7 +105,7 @@ describe('test/index.test.js', function() {
             const res = cutter.doMatch('test[link](xx)', cutter.findInMatches('link'), 2);
             assert(res.string === 'test__________');
             assert(res.resources.length === 1);
-            assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10 });
+            assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10, txt: 'link' });
         });
 
         it('should work with foo match', function() {
@@ -128,8 +128,14 @@ describe('test/index.test.js', function() {
         });
 
         it('should work with overReturn', function() {
-            const res = cutter.doMatch('foofoo[link](xx)', { key: 'foo', reg: 'foo', overReturn() { return '1'; } }, 1);
-            assert(res, 'foo1[link](xx)');
+            const res = cutter.doMatch('foofoo[link](xx)', { key: 'foo', reg: /foo/g, overReturn() { return '1'; } }, 1);
+            assert(res.string === '___1[link](xx)');
+        });
+
+        it('should work with exportTxt', function() {
+            const res = cutter.doMatch('foo[link](xx)', { key: 'foo', reg: /foo/g, exportTxt() { return '1'; } }, 1);
+            assert(res.string === '___[link](xx)');
+            assert.deepStrictEqual(res.resources, [{ key: 'foo', index: 0, content: 'foo', length: 3, txt: '1' }]);
         });
     });
 
@@ -139,6 +145,40 @@ describe('test/index.test.js', function() {
                 onTextParse: txt => txt.replace(/[!*\[\]<>`]/g, he.encode),
             }).textParse('[]<>`');
             assert(res === he.encode('[]<>`'));
+        });
+    });
+
+    describe('assemble', function() {
+        it('should work with empty', function() {
+            const res = cutter.assemble();
+            assert(!res);
+        });
+
+        it('should work txtParse if resources is empty', function() {
+            let res = new MarkdownCutter({
+                onTextParse: txt => txt.replace(/[!*\[\]<>`]/g, he.encode),
+            }).assemble({ string: '[]<>`' });
+            assert(res === he.encode('[]<>`'));
+        });
+
+        it('should work with resource.txt ', function() {
+            const res = new MarkdownCutter().assemble({
+                string: '12345_________',
+                resources: [{
+                    key: 'link',
+                    index: 5,
+                    content: 'xxxxx',
+                    length: 5,
+                    txt: 'xxxxx',
+                }, {
+                    key: 'link',
+                    index: 10,
+                    content: 'sssss',
+                    length: 5,
+                    txt: 'sssss',
+                }]
+            }, { text: 9 });
+            assert(res === '12345xxxxx');
         });
     });
 
