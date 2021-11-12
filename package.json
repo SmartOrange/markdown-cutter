@@ -34,5 +34,7 @@
     "mocha": "^9.1.3",
     "nyc": "^15.1.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "debug": "^4.3.2"
+  }
 }

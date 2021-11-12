@@ -1,4 +1,5 @@
 'use strict';
+const debug = require('debug')('cutter');
 
 const defaultMatches = [
     {
@@ -8,9 +9,14 @@ const defaultMatches = [
     {
         key: 'link',
         reg: /\[.*?\]\(.*?\)/g,
-        exportTxt(content) {
+        getTextLength(content) {
             let mathces = content.match(/\[(.*?)\]\(.*?\)/);
-            return mathces ? mathces[1] : '';
+            return mathces ? mathces[1].length : 0;
+        },
+        getValue(content, len) {
+            return content.replace(/\[(.*?)\]\(.*?\)/, (a, b) => {
+                return a.replace(b, b.slice(0, len) + (b.length > len ? '...' : ''));
+            });
         }
     }
 ];
@@ -53,7 +59,7 @@ class Cutter {
     }
 
     doMatch(string, match, limit = 1) {
-        const { reg, key, overReturn, exportTxt } = match;
+        const { reg, key, overReturn, getTextLength } = match;
         if (!reg) return console.warn('match:%s has no reg', key);
 
         const resources = [];
@@ -65,8 +71,8 @@ class Cutter {
                     content,
                     length: content.length,
                 };
-                if (exportTxt) {
-                    resource.txt = exportTxt(content);
+                if (getTextLength) {
+                    resource.textLength = getTextLength(content);
                 }
                 resources.push(resource);
                 return '_'.repeat(content.length);
@@ -104,40 +110,61 @@ class Cutter {
     }
 
     assemble({ string, resources = [] } = {}, limits = {}) {
+        debug('assemble params', string, resources, limits);
         if (!resources.length) return this.textParse(string);
 
         const currentLimits = { ...this.limits, ...limits };
-        let isSuffixRequired = false;
         let str = string;
-        const ignoreLen = resources.map(re => re.txt ? re.length - re.txt.length : re.length).reduce((a, b) => a + b);
-        if (str.length > currentLimits.text + ignoreLen) {
-            str = str.slice(0, currentLimits.text + ignoreLen);
-            isSuffixRequired = true;
-        }
-        const endIndex = str.length;
+        const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
+        const maxEndIndex = currentLimits.text + ignoreLen;
         // The initial position is 0, to ensure that the first one is definitely text
         const points = [0];
         const sortResources = resources.sort((a, b) => a.index - b.index);
         sortResources.forEach(({ index, length }) => {
-            if (index < endIndex) {
+            if (index < maxEndIndex) {
                 points.push(index);
             }
-            if (index + length < endIndex) {
+            if (index + length < maxEndIndex) {
                 points.push(index + length);
             }
         });
-        points.push(endIndex);
+        points.push(maxEndIndex);
+        let isSuffixRequired = maxEndIndex < string.length;
+        debug('isSuffixRequired', isSuffixRequired);
+
         const textNodes = this.splitByPoints(str, points);
+        debug('points', points);
+        debug('textNodes', textNodes);
+
+        let resultLen = 0;
         // Add resources back
-        str = textNodes.map((textNode, index) => {
-            if (index % 2) {
+        const result = textNodes.map((textNode, index) => {
+            const quotaLen = currentLimits.text - resultLen;
+            const isResourceReplaceNode = index % 2;
+
+            if (quotaLen <= 0) return;
+            if (quotaLen <= textNode.length) {
+                isSuffixRequired = true;
+                textNode = textNode.slice(0, quotaLen);
+            }
+
+            if (isResourceReplaceNode) {
                 const item = sortResources.shift();
                 const match = this.findInMatches(item.key);
+                if (item.textLength) {
+                    isSuffixRequired = false;
+                    resultLen = resultLen + item.textLength;
+                }
                 return match.getValue ? match.getValue(item.content, textNode.length) : item.content;
             } else {
+                resultLen = resultLen + textNode.length;
                 return this.textParse(textNode);
             }
-        }).join('');
+        }).filter(i => i);
+        debug('result', result);
+
+        str = result.join('');
+
         if (isSuffixRequired) {
             str = str + this.suffix;
         }

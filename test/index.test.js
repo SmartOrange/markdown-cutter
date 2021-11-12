@@ -46,6 +46,14 @@ describe('test/index.test.js', function() {
             assert(defaultCutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
             assert(defaultCutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超');
         });
+
+        it('should work with all links', function() {
+            const links = [...new Array(2)].map((i, index) => `[link${index}](link_url:${index})`).join('abc');
+            assert(cutter.cut(links, { text: 1, link: 20 }) === '[l...](link_url:0)');
+            assert(cutter.cut(links, { text: 6, link: 20 }) === '[link0](link_url:0)a...');
+            assert(cutter.cut(links, { text: 7, link: 20 }) === '[link0](link_url:0)ab...');
+            assert(cutter.cut(links, { text: 9, link: 20 }) === '[link0](link_url:0)abc[l...](link_url:1)');
+        });
     });
 
     describe('cutter', function() {
@@ -105,7 +113,7 @@ describe('test/index.test.js', function() {
             const res = cutter.doMatch('test[link](xx)', cutter.findInMatches('link'), 2);
             assert(res.string === 'test__________');
             assert(res.resources.length === 1);
-            assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10, txt: 'link' });
+            assert.deepEqual(res.resources[0], { key: 'link', index: 4, content: '[link](xx)', length: 10, textLength: 4 });
         });
 
         it('should work with foo match', function() {
@@ -132,10 +140,10 @@ describe('test/index.test.js', function() {
             assert(res.string === '___1[link](xx)');
         });
 
-        it('should work with exportTxt', function() {
-            const res = cutter.doMatch('foo[link](xx)', { key: 'foo', reg: /foo/g, exportTxt() { return '1'; } }, 1);
+        it('should work with getTextLength', function() {
+            const res = cutter.doMatch('foo[link](xx)', { key: 'foo', reg: /foo/g, getTextLength() { return 1; } }, 1);
             assert(res.string === '___[link](xx)');
-            assert.deepStrictEqual(res.resources, [{ key: 'foo', index: 0, content: 'foo', length: 3, txt: '1' }]);
+            assert.deepStrictEqual(res.resources, [{ key: 'foo', index: 0, content: 'foo', length: 3, textLength: 1 }]);
         });
     });
 
@@ -169,13 +177,13 @@ describe('test/index.test.js', function() {
                     index: 5,
                     content: 'xxxxx',
                     length: 5,
-                    txt: 'xxxxx',
+                    textLength: 5,
                 }, {
                     key: 'link',
                     index: 10,
                     content: 'sssss',
                     length: 5,
-                    txt: 'sssss',
+                    textLength: 5,
                 }]
             }, { text: 9 });
             assert(res === '12345xxxxx');
