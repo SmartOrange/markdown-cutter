@@ -8,6 +8,18 @@ Markdown text cutter, will not cut off links, pictures
 
 ## Usage
 
+### Quick to use
+The component provides a fast markdown summary trimming capability. Can be used directly without any configuration.
+By default, it will return a picture, a link, 140 words(including the link text).
+
+```javascript
+const MarkdownCutter = require('markdown-cutter');
+const summary = new MarkdownCutter().cut('balabala ![image](xxx) ![]([object Object]#height=18&width=18) balabalabalabala');
+```
+
+### Custom use
+You can also configure custom parsing markdown text.
+
 ```javascript
 const MarkdownCutter = require('markdown-cutter');
 const cutter = new MarkdownCutter({
@@ -48,3 +60,4 @@ console.log(cutter.dissect(content));
 
 ## Built-in matches 
 *image* | /!\[.*?\]\(.*?\)/g | match images
+*link* | /\[.*?\]\(.*?\)/g | match links
