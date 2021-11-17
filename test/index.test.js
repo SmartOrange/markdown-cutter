@@ -39,12 +39,16 @@ const cutter = new MarkdownCutter({
 });
 
 const str = `![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁![image.png](测试图片1)dsadsadsa![image.png](测试图片2)你![image.png](测试图片3)好`;
-
+const pureTxt = '超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好';
 describe('test/index.test.js', function() {
     describe('defaultCutter', function() {
         it('should work', function() {
             assert(defaultCutter.cut(str) === '![image.png](测试图片0)超人会不会飞我不知道，你肯定不会飞🫁dsadsadsa你好');
             assert(defaultCutter.cut(str, { text: 1 }) === '![image.png](测试图片0)超');
+        });
+
+        it('should work with pure text', function() {
+            assert(defaultCutter.cut(pureTxt, { text: 1 }) === '超');
         });
 
         it('should work with all links', function() {

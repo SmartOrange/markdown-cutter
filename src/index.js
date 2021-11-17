@@ -111,9 +111,10 @@ class Cutter {
 
     assemble({ string, resources = [] } = {}, limits = {}) {
         debug('assemble params', string, resources, limits);
-        if (!resources.length) return this.textParse(string);
-
         const currentLimits = { ...this.limits, ...limits };
+        if (!string) return;
+        if (!resources.length) return this.textParse(string.slice(0, currentLimits.text)) + this.suffix;
+
         let str = string;
         const ignoreLen = resources.map(re => re.length).reduce((a, b) => a + b);
         const maxEndIndex = currentLimits.text + ignoreLen;
